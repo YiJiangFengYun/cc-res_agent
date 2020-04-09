@@ -215,3 +215,4 @@ export class ResAgent {
 }
 
 export const resAgent = new ResAgent();
+if (window) (window as any).resAgent = resAgent;
