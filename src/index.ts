@@ -25,7 +25,7 @@ if (!isChildClassOf) {
     isChildClassOf = cc["isChildClassOf"];
 }
 
-export default class ResAgent {
+export class ResAgent {
     //资源依赖和被依赖信息
     private _mapResDepends: { [key: string]: { numDepended: number, depends: string[] } } = {};
 
