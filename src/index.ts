@@ -140,8 +140,9 @@ export class ResAgent {
             }
 
             //更新资源依赖
-            const item = cc.loader.getRes(resArgs.path, resArgs.type);
             const key = (cc.loader as any)._getReferenceKey(resArgs.path);
+            const item = this._getItemFromLoaderCache(resArgs.path, resArgs.type);
+            
             updateDependRelations(key, item);
 
             //更新使用依赖
@@ -210,6 +211,24 @@ export class ResAgent {
                     freeOneUse(key);
                 });
             }
+        }
+    }
+
+    private _getItemFromLoaderCache(urlPath: string, type?: typeof cc.Asset) {
+        let ccloader: any = cc.loader;
+        var item = ccloader._cache[urlPath];
+        if (!item) {
+            var uuid = ccloader._getResUuid(urlPath, type, null, true);
+            if (uuid) {
+                var ref = ccloader._getReferenceKey(uuid);
+                item = ccloader._cache[ref];
+            }
+            else {
+                return null;
+            }
+        }
+        if (item && item.alias) {
+            item = item.alias;
         }
     }
 }
