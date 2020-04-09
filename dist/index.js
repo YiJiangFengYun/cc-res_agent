@@ -173,6 +173,7 @@ var ResAgent = /** @class */ (function () {
         if (item && item.alias) {
             item = item.alias;
         }
+        return item;
     };
     return ResAgent;
 }());
