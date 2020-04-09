@@ -10,5 +10,8 @@
   "license": "UNLICENSED",
   "devDependencies": {
     "typescript": "^3.8.3"
-  }
+  },
+  "files": [
+    "dist"
+  ]
 }

@@ -230,6 +230,8 @@ export class ResAgent {
         if (item && item.alias) {
             item = item.alias;
         }
+
+        return item;
     }
 }
 
