@@ -42,5 +42,6 @@ export declare class ResAgent {
     freeRes(keyUse: string): any;
     freeRes(keyUse: string, path: string): any;
     freeRes(keyUse: string, path: string, type: typeof cc.Asset): any;
+    private _getItemFromLoaderCache;
 }
 export declare const resAgent: ResAgent;

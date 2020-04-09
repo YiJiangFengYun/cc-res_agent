@@ -62,6 +62,7 @@ var ResAgent = /** @class */ (function () {
         return this._mapResUses[id];
     };
     ResAgent.prototype.useRes = function () {
+        var _this = this;
         var resArgs = this._makeArgsUseRes.apply(this, arguments);
         var mapResDepends = this._mapResDepends;
         var mapResUses = this._mapResUses;
@@ -96,8 +97,8 @@ var ResAgent = /** @class */ (function () {
                 }
             }
             //更新资源依赖
-            var item = cc.loader.getRes(resArgs.path, resArgs.type);
             var key = cc.loader._getReferenceKey(resArgs.path);
+            var item = _this._getItemFromLoaderCache(resArgs.path, resArgs.type);
             updateDependRelations(key, item);
             //更新使用依赖
             var resDepends = mapResDepends[key];
@@ -154,6 +155,23 @@ var ResAgent = /** @class */ (function () {
                     freeOneUse(key);
                 });
             }
+        }
+    };
+    ResAgent.prototype._getItemFromLoaderCache = function (urlPath, type) {
+        var ccloader = cc.loader;
+        var item = ccloader._cache[urlPath];
+        if (!item) {
+            var uuid = ccloader._getResUuid(urlPath, type, null, true);
+            if (uuid) {
+                var ref = ccloader._getReferenceKey(uuid);
+                item = ccloader._cache[ref];
+            }
+            else {
+                return null;
+            }
+        }
+        if (item && item.alias) {
+            item = item.alias;
         }
     };
     return ResAgent;
