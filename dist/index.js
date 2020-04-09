@@ -160,3 +160,5 @@ var ResAgent = /** @class */ (function () {
 }());
 exports.ResAgent = ResAgent;
 exports.resAgent = new ResAgent();
+if (window)
+    window.resAgent = exports.resAgent;
