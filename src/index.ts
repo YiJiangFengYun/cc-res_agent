@@ -213,3 +213,5 @@ export default class ResAgent {
         }
     }
 }
+
+export const resAgent = new ResAgent();
