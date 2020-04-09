@@ -43,3 +43,4 @@ export default class ResAgent {
     freeRes(keyUse: string, path: string): any;
     freeRes(keyUse: string, path: string, type: typeof cc.Asset): any;
 }
+export declare const resAgent: ResAgent;

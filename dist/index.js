@@ -159,3 +159,4 @@ var ResAgent = /** @class */ (function () {
     return ResAgent;
 }());
 exports.default = ResAgent;
+exports.resAgent = new ResAgent();
