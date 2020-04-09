@@ -1,6 +1,6 @@
 export declare type ProcessCallback = (completedCount: number, totalCount: number, item: any) => void;
 export declare type CompletedCallback = (error: Error, resource: any) => void;
-export default class ResAgent {
+export declare class ResAgent {
     private _mapResDepends;
     private _mapResUses;
     constructor();
