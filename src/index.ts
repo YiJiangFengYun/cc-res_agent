@@ -200,7 +200,7 @@ export class ResAgent {
         function freeOneUse(key: string, type?: typeof cc.Asset) {
             const resDepends = mapResDepends[key];
             --resDepends.numDepended;
-            if (--resDepends.numDepended <= 0) {
+            if (resDepends.numDepended <= 0) {
                 // 释放该资源
                 const depends = resDepends.depends;
                 resDepends.depends = [];
