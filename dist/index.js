@@ -146,7 +146,7 @@ var ResAgent = /** @class */ (function () {
         function freeOneUse(key, type) {
             var resDepends = mapResDepends[key];
             --resDepends.numDepended;
-            if (--resDepends.numDepended <= 0) {
+            if (resDepends.numDepended <= 0) {
                 // 释放该资源
                 var depends = resDepends.depends;
                 resDepends.depends = [];
