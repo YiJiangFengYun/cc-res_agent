@@ -205,7 +205,15 @@ export class ResAgent {
                 const depends = resDepends.depends;
                 resDepends.depends = [];
 
-                cc.loader.release(key);
+                var releaseSettings = (cc.loader as any)._autoReleaseSetting;
+                //Only release asset is set auto release to false or true;
+                //When release setting is undefined, it will be asset managed by scene.
+                if (typeof releaseSettings[key] === "boolean") {
+                    cc.loader.release(key);
+                } else {
+                    console.warn(`Res Agent: Asset ${key} is managed by scene, so don't release it.`);
+                    console.warn(`Res Agent: You should set scene to auto release its dependent assets`);
+                }
 
                 depends.forEach((key) => {
                     freeOneUse(key);
