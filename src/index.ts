@@ -173,7 +173,7 @@ export class ResAgent {
     /**
      * 释放资源
      * @param keyUse        标识使用的key
-     * @param path           要释放的url
+     * @param path          要释放的url
      * @param type          资源类型
      */
     public freeRes(keyUse: string);
@@ -195,7 +195,7 @@ export class ResAgent {
             mapResUses[resArgs.keyUse] = [];
             resUse.forEach((key) => {
                 freeOneUse(key);
-            })
+            });
         }
         function freeOneUse(key: string, type?: typeof cc.Asset) {
             const resDepends = mapResDepends[key];
