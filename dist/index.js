@@ -68,7 +68,9 @@ var ResAgent = /** @class */ (function () {
         var mapResUses = this._mapResUses;
         var finishCallback = function (error, resource) {
             if (error) {
-                throw error;
+                if (resArgs.onCompleted)
+                    resArgs.onCompleted(error);
+                return;
             }
             // 反向关联引用（为所有引用到的资源打上本资源引用到的标记）
             function updateDependRelations(key, item) {
@@ -112,7 +114,7 @@ var ResAgent = /** @class */ (function () {
             }
             // 执行完成回调
             if (resArgs.onCompleted) {
-                resArgs.onCompleted(error, resource);
+                resArgs.onCompleted(null, resource);
             }
         };
         // 预判是否资源已加载

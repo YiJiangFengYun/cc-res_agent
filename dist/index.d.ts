@@ -1,5 +1,5 @@
 export declare type ProcessCallback = (completedCount: number, totalCount: number, item: any) => void;
-export declare type CompletedCallback = (error: Error, resource: any) => void;
+export declare type CompletedCallback = (error: Error, resource?: any) => void;
 export declare class ResAgent {
     private _mapResDepends;
     private _mapResUses;
@@ -36,7 +36,7 @@ export declare class ResAgent {
     /**
      * 释放资源
      * @param keyUse        标识使用的key
-     * @param path           要释放的url
+     * @param path          要释放的url
      * @param type          资源类型
      */
     freeRes(keyUse: string): any;
