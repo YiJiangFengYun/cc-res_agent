@@ -2,7 +2,7 @@
 // // 资源加载的处理回调
 export type ProcessCallback = (completedCount: number, totalCount: number, item: any) => void;
 // // 资源加载的完成回调
-export type CompletedCallback = (error: Error, resource: any) => void;
+export type CompletedCallback = (error: Error, resource?: any) => void;
 
 
 interface ArgsUseRes {
@@ -111,7 +111,8 @@ export class ResAgent {
         const mapResUses = this._mapResUses;
         const finishCallback = (error: Error, resource: any) => {
             if (error) {
-                throw error;
+                if (resArgs.onCompleted) resArgs.onCompleted(error);
+                return;
             }
             // 反向关联引用（为所有引用到的资源打上本资源引用到的标记）
             function updateDependRelations(key: string, item: any) {
@@ -157,7 +158,7 @@ export class ResAgent {
 
             // 执行完成回调
             if (resArgs.onCompleted) {
-                resArgs.onCompleted(error, resource);
+                resArgs.onCompleted(null, resource);
             }
         };
 
@@ -173,7 +174,7 @@ export class ResAgent {
     /**
      * 释放资源
      * @param keyUse        标识使用的key
-     * @param path           要释放的url
+     * @param path          要释放的url
      * @param type          资源类型
      */
     public freeRes(keyUse: string);
@@ -195,7 +196,7 @@ export class ResAgent {
             mapResUses[resArgs.keyUse] = [];
             resUse.forEach((key) => {
                 freeOneUse(key);
-            })
+            });
         }
         function freeOneUse(key: string, type?: typeof cc.Asset) {
             const resDepends = mapResDepends[key];
