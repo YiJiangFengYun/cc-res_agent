@@ -33,6 +33,10 @@ export class ResAgent {
     // 外部通过唯一的id使用某些资源，记录到依赖数组中，同时被使用的资源的被依赖次数相应的增加。
     private _mapResUses: { [ key: string ]: string[] } = {};
 
+    private _loadingCount = 0;
+
+    private _waitFrees: { [keyUse: string]: ArgsFreeRes } = {};
+
     public constructor() {
 
     }
@@ -106,12 +110,17 @@ export class ResAgent {
     public useRes(keyUse:  string, path: string, type: typeof cc.Asset, onCompleted: CompletedCallback);
     public useRes(keyUse:  string, path: string, type: typeof cc.Asset, onProgess: ProcessCallback, onCompleted: CompletedCallback);
     public useRes() {
+        ++this._loadingCount;
         const resArgs: ArgsUseRes = this._makeArgsUseRes.apply(this, arguments);
         const mapResDepends = this._mapResDepends;
         const mapResUses = this._mapResUses;
         const finishCallback = (error: Error, resource: any) => {
+            --this._loadingCount;
             if (error) {
                 if (resArgs.onCompleted) resArgs.onCompleted(error);
+                if (this._loadingCount <= 0) {
+                    this._doWaitFrees();
+                }
                 return;
             }
             // 反向关联引用（为所有引用到的资源打上本资源引用到的标记）
@@ -132,6 +141,7 @@ export class ResAgent {
                     for (let depKey of item.dependKeys) {
                         const depItem = (cc.loader as any)._cache[depKey];
                         updateDependRelations(depKey, depItem);
+
                         const depInfoDepends = mapResDepends[depKey];
                         //相互记录依赖
                         resDepends.depends.push(depKey);
@@ -160,7 +170,14 @@ export class ResAgent {
             if (resArgs.onCompleted) {
                 resArgs.onCompleted(null, resource);
             }
+
+            if (this._loadingCount <= 0) {
+                this._doWaitFrees();
+            }
         };
+
+        //移除等待释放的资源
+        this._removeWaitFree(resArgs.keyUse);
 
         // 预判是否资源已加载
         let res = cc.loader.getRes(resArgs.path, resArgs.type);
@@ -182,6 +199,10 @@ export class ResAgent {
     public freeRes(keyUse: string, path: string, type: typeof cc.Asset);
     public freeRes() {
         let resArgs: ArgsFreeRes = this._makeArgsFreeRes.apply(this, arguments);
+        if (this._loadingCount > 0) {
+            this._addWaitFree(resArgs);
+            return;
+        }
         const key = resArgs.path ? (cc.loader as any)._getReferenceKey(resArgs.path) : null;
         const mapResDepends = this._mapResDepends;
         const mapResUses = this._mapResUses;
@@ -233,6 +254,24 @@ export class ResAgent {
         }
 
         return item;
+    }
+
+    private _doWaitFrees() {
+        const waitFrees = this._waitFrees;
+        for (let key in waitFrees) {
+            this.freeRes(waitFrees[key].keyUse, waitFrees[key].path, waitFrees[key].type);
+        }
+        this._waitFrees = {};
+    }
+
+    private _addWaitFree(args: ArgsFreeRes) {
+        this._waitFrees[args.keyUse] = args;
+    }
+
+    private _removeWaitFree(keyUse: string) {
+        if (this._waitFrees[keyUse]) {
+            delete this._waitFrees[keyUse];
+        }
     }
 }
 
