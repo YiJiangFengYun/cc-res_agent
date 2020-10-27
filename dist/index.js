@@ -12,6 +12,8 @@ var ResAgent = /** @class */ (function () {
         //外部使用信息
         // 外部通过唯一的id使用某些资源，记录到依赖数组中，同时被使用的资源的被依赖次数相应的增加。
         this._mapResUses = {};
+        this._loadingCount = 0;
+        this._waitFrees = {};
     }
     ResAgent.prototype.del = function () {
     };
@@ -63,13 +65,18 @@ var ResAgent = /** @class */ (function () {
     };
     ResAgent.prototype.useRes = function () {
         var _this = this;
+        ++this._loadingCount;
         var resArgs = this._makeArgsUseRes.apply(this, arguments);
         var mapResDepends = this._mapResDepends;
         var mapResUses = this._mapResUses;
         var finishCallback = function (error, resource) {
+            --_this._loadingCount;
             if (error) {
                 if (resArgs.onCompleted)
                     resArgs.onCompleted(error);
+                if (_this._loadingCount <= 0) {
+                    _this._doWaitFrees();
+                }
                 return;
             }
             // 反向关联引用（为所有引用到的资源打上本资源引用到的标记）
@@ -116,7 +123,12 @@ var ResAgent = /** @class */ (function () {
             if (resArgs.onCompleted) {
                 resArgs.onCompleted(null, resource);
             }
+            if (_this._loadingCount <= 0) {
+                _this._doWaitFrees();
+            }
         };
+        //移除等待释放的资源
+        this._removeWaitFree(resArgs.keyUse);
         // 预判是否资源已加载
         var res = cc.loader.getRes(resArgs.path, resArgs.type);
         if (res) {
@@ -128,6 +140,10 @@ var ResAgent = /** @class */ (function () {
     };
     ResAgent.prototype.freeRes = function () {
         var resArgs = this._makeArgsFreeRes.apply(this, arguments);
+        if (this._loadingCount > 0) {
+            this._addWaitFree(resArgs);
+            return;
+        }
         var key = resArgs.path ? cc.loader._getReferenceKey(resArgs.path) : null;
         var mapResDepends = this._mapResDepends;
         var mapResUses = this._mapResUses;
@@ -176,6 +192,21 @@ var ResAgent = /** @class */ (function () {
             item = item.alias;
         }
         return item;
+    };
+    ResAgent.prototype._doWaitFrees = function () {
+        var waitFrees = this._waitFrees;
+        for (var key in waitFrees) {
+            this.freeRes(waitFrees[key].keyUse, waitFrees[key].path, waitFrees[key].type);
+        }
+        this._waitFrees = {};
+    };
+    ResAgent.prototype._addWaitFree = function (args) {
+        this._waitFrees[args.keyUse] = args;
+    };
+    ResAgent.prototype._removeWaitFree = function (keyUse) {
+        if (this._waitFrees[keyUse]) {
+            delete this._waitFrees[keyUse];
+        }
     };
     return ResAgent;
 }());

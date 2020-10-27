@@ -3,6 +3,8 @@ export declare type CompletedCallback = (error: Error, resource?: any) => void;
 export declare class ResAgent {
     private _mapResDepends;
     private _mapResUses;
+    private _loadingCount;
+    private _waitFrees;
     constructor();
     del(): void;
     init(): void;
@@ -43,5 +45,8 @@ export declare class ResAgent {
     freeRes(keyUse: string, path: string): any;
     freeRes(keyUse: string, path: string, type: typeof cc.Asset): any;
     private _getItemFromLoaderCache;
+    private _doWaitFrees;
+    private _addWaitFree;
+    private _removeWaitFree;
 }
 export declare const resAgent: ResAgent;
