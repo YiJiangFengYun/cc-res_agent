@@ -35,7 +35,7 @@ export class ResAgent {
 
     private _loadingCount = 0;
 
-    private _waitFrees: { [keyUse: string]: ArgsFreeRes } = {};
+    private _waitFrees: { [keyUse: string]: { [path: string ]: ArgsFreeRes } } = {};
 
     public constructor() {
 
@@ -180,7 +180,7 @@ export class ResAgent {
         };
 
         //移除等待释放的资源
-        this._removeWaitFree(resArgs.keyUse);
+        this._removeWaitFree(resArgs);
 
         // 预判是否资源已加载
         let res = cc.loader.getRes(resArgs.path, resArgs.type);
@@ -262,18 +262,31 @@ export class ResAgent {
     private _doWaitFrees() {
         const waitFrees = this._waitFrees;
         for (let key in waitFrees) {
-            this.freeRes(waitFrees[key].keyUse, waitFrees[key].path, waitFrees[key].type);
+            const map = waitFrees[key];
+            for (let key in map) {
+                this.freeRes(map[key].keyUse, map[key].path, map[key].type);
+            }
         }
         this._waitFrees = {};
     }
 
     private _addWaitFree(args: ArgsFreeRes) {
-        this._waitFrees[args.keyUse] = args;
+        if (! this._waitFrees[args.keyUse]) {
+            this._waitFrees[args.keyUse] = {};
+        }
+        this._waitFrees[args.keyUse][args.path] = args;
     }
 
-    private _removeWaitFree(keyUse: string) {
-        if (this._waitFrees[keyUse]) {
-            delete this._waitFrees[keyUse];
+    private _removeWaitFree(args: ArgsUseRes) {
+        const waitFrees = this._waitFrees;
+        if (waitFrees[args.keyUse]) {
+            const waitFree = waitFrees[args.keyUse];
+            if (args.path) {
+                if (waitFree[args.path]) delete waitFree[args.path];
+                if ( ! Object.keys(waitFree).length) delete waitFrees[args.keyUse];
+            } else {
+                delete waitFrees[args.keyUse];
+            }
         }
     }
 }
