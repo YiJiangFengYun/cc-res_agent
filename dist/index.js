@@ -128,7 +128,7 @@ var ResAgent = /** @class */ (function () {
             }
         };
         //移除等待释放的资源
-        this._removeWaitFree(resArgs.keyUse);
+        this._removeWaitFree(resArgs);
         // 预判是否资源已加载
         var res = cc.loader.getRes(resArgs.path, resArgs.type);
         if (res) {
@@ -196,16 +196,32 @@ var ResAgent = /** @class */ (function () {
     ResAgent.prototype._doWaitFrees = function () {
         var waitFrees = this._waitFrees;
         for (var key in waitFrees) {
-            this.freeRes(waitFrees[key].keyUse, waitFrees[key].path, waitFrees[key].type);
+            var map = waitFrees[key];
+            for (var key_1 in map) {
+                this.freeRes(map[key_1].keyUse, map[key_1].path, map[key_1].type);
+            }
         }
         this._waitFrees = {};
     };
     ResAgent.prototype._addWaitFree = function (args) {
-        this._waitFrees[args.keyUse] = args;
+        if (!this._waitFrees[args.keyUse]) {
+            this._waitFrees[args.keyUse] = {};
+        }
+        this._waitFrees[args.keyUse][args.path] = args;
     };
-    ResAgent.prototype._removeWaitFree = function (keyUse) {
-        if (this._waitFrees[keyUse]) {
-            delete this._waitFrees[keyUse];
+    ResAgent.prototype._removeWaitFree = function (args) {
+        var waitFrees = this._waitFrees;
+        if (waitFrees[args.keyUse]) {
+            var waitFree = waitFrees[args.keyUse];
+            if (args.path) {
+                if (waitFree[args.path])
+                    delete waitFree[args.path];
+                if (!Object.keys(waitFree).length)
+                    delete waitFrees[args.keyUse];
+            }
+            else {
+                delete waitFrees[args.keyUse];
+            }
         }
     };
     return ResAgent;
