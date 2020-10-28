@@ -218,7 +218,7 @@ export class ResAgent {
             }
         } else {
             mapResUses[resArgs.keyUse] = [];
-            resUse.forEach((key) => {
+            resUse && resUse.forEach((key) => {
                 freeOneUse(key);
             });
         }
