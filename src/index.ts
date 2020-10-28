@@ -152,16 +152,19 @@ export class ResAgent {
 
             //更新资源依赖
             const key = (cc.loader as any)._getReferenceKey(resArgs.path);
-            const item = this._getItemFromLoaderCache(resArgs.path, resArgs.type);
-            
-            updateDependRelations(key, item);
 
-            //更新使用依赖
-            const resDepends = mapResDepends[key];
             let resUse = mapResUses[resArgs.keyUse];
             if (! resUse) mapResUses[resArgs.keyUse] = resUse = [];
+
             //判断之前使用被相同的使用ID使用过
             if (resUse.indexOf(key) < 0) {
+                const item = this._getItemFromLoaderCache(resArgs.path, resArgs.type);
+                
+                updateDependRelations(key, item);
+    
+                //更新使用依赖
+                const resDepends = mapResDepends[key];
+                
                 resUse.push(key);
                 ++resDepends.numDepended;
             }
