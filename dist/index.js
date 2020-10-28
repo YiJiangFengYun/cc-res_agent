@@ -157,7 +157,7 @@ var ResAgent = /** @class */ (function () {
         }
         else {
             mapResUses[resArgs.keyUse] = [];
-            resUse.forEach(function (key) {
+            resUse && resUse.forEach(function (key) {
                 freeOneUse(key);
             });
         }
