@@ -107,15 +107,15 @@ var ResAgent = /** @class */ (function () {
             }
             //更新资源依赖
             var key = cc.loader._getReferenceKey(resArgs.path);
-            var item = _this._getItemFromLoaderCache(resArgs.path, resArgs.type);
-            updateDependRelations(key, item);
-            //更新使用依赖
-            var resDepends = mapResDepends[key];
             var resUse = mapResUses[resArgs.keyUse];
             if (!resUse)
                 mapResUses[resArgs.keyUse] = resUse = [];
             //判断之前使用被相同的使用ID使用过
             if (resUse.indexOf(key) < 0) {
+                var item = _this._getItemFromLoaderCache(resArgs.path, resArgs.type);
+                updateDependRelations(key, item);
+                //更新使用依赖
+                var resDepends = mapResDepends[key];
                 resUse.push(key);
                 ++resDepends.numDepended;
             }
