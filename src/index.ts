@@ -139,6 +139,7 @@ export class ResAgent {
 
                 if (item && item.dependKeys && Array.isArray(item.dependKeys)) {
                     for (let depKey of item.dependKeys) {
+                        if (depKey === key) continue;
                         const depItem = (cc.loader as any)._cache[depKey];
                         updateDependRelations(depKey, depItem);
 
