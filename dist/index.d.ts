@@ -41,6 +41,7 @@ export declare class ResAgent {
     freeRes(keyUse: string, path: string): any;
     freeRes(keyUse: string, path: string, type: typeof cc.Asset): any;
     private _getItemFromLoaderCache;
+    private _getKey;
     private _doWaitFrees;
     private _addWaitFree;
     private _removeWaitFree;

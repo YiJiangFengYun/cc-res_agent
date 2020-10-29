@@ -105,7 +105,7 @@ var ResAgent = /** @class */ (function () {
                 }
             }
             //更新资源依赖
-            var key = cc.loader._getResUuid(resArgs.path, resArgs.type, null, true);
+            var key = _this._getKey(resArgs.path, resArgs.type);
             var resUse = mapResUses[resArgs.keyUse];
             if (!resUse)
                 mapResUses[resArgs.keyUse] = resUse = [];
@@ -143,7 +143,7 @@ var ResAgent = /** @class */ (function () {
             this._addWaitFree(resArgs);
             return;
         }
-        var key = resArgs.path ? cc.loader._getResUuid(resArgs.path, resArgs.type, null, true) : null;
+        var key = resArgs.path ? this._getKey(resArgs.path, resArgs.type) : null;
         var mapResDepends = this._mapResDepends;
         var mapResUses = this._mapResUses;
         var resUse = mapResUses[resArgs.keyUse];
@@ -178,11 +178,9 @@ var ResAgent = /** @class */ (function () {
         var ccloader = cc.loader;
         var item = ccloader._cache[urlPath];
         if (!item) {
-            var uuid = ccloader._getResUuid(urlPath, type, null, true);
-            if (uuid) {
-                // var ref = ccloader._getReferenceKey(uuid);
-                // item = ccloader._cache[ref];
-                item = ccloader._cache[uuid];
+            var key = this._getKey(urlPath, type);
+            if (key) {
+                item = ccloader._cache[key];
             }
             else {
                 return null;
@@ -192,6 +190,14 @@ var ResAgent = /** @class */ (function () {
             item = item.alias;
         }
         return item;
+    };
+    ResAgent.prototype._getKey = function (urlPath, type) {
+        var ccloader = cc.loader;
+        var uuid = ccloader._getResUuid(urlPath, type, null, true);
+        if (uuid) {
+            var ref = ccloader._getReferenceKey(uuid);
+        }
+        return ref;
     };
     ResAgent.prototype._doWaitFrees = function () {
         var waitFrees = this._waitFrees;
