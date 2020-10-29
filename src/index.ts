@@ -148,7 +148,7 @@ export class ResAgent {
             }
 
             //更新资源依赖
-            const key = (cc.loader as any)._getResUuid(resArgs.path, resArgs.type, null, true);
+            const key = this._getKey(resArgs.path, resArgs.type);
 
             let resUse = mapResUses[resArgs.keyUse];
             if (! resUse) mapResUses[resArgs.keyUse] = resUse = [];
@@ -203,7 +203,7 @@ export class ResAgent {
             this._addWaitFree(resArgs);
             return;
         }
-        const key = resArgs.path ? (cc.loader as any)._getResUuid(resArgs.path, resArgs.type, null, true) : null;
+        const key = resArgs.path ? this._getKey(resArgs.path, resArgs.type) : null;
         const mapResDepends = this._mapResDepends;
         const mapResUses = this._mapResUses;
         const resUse = mapResUses[resArgs.keyUse];
@@ -240,11 +240,9 @@ export class ResAgent {
         let ccloader: any = cc.loader;
         var item = ccloader._cache[urlPath];
         if (!item) {
-            var uuid = ccloader._getResUuid(urlPath, type, null, true);
-            if (uuid) {
-                // var ref = ccloader._getReferenceKey(uuid);
-                // item = ccloader._cache[ref];
-                item = ccloader._cache[uuid];
+            const key = this._getKey(urlPath, type);
+            if (key) {
+                item = ccloader._cache[key];
             }
             else {
                 return null;
@@ -255,6 +253,15 @@ export class ResAgent {
         }
 
         return item;
+    }
+
+    private _getKey(urlPath: string, type?: typeof cc.Asset) {
+        let ccloader: any = cc.loader;
+        var uuid = ccloader._getResUuid(urlPath, type, null, true);
+        if (uuid) {
+            var ref = ccloader._getReferenceKey(uuid);
+        }
+        return ref;
     }
 
     private _doWaitFrees() {
