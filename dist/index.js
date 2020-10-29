@@ -57,9 +57,6 @@ var ResAgent = /** @class */ (function () {
         }
         return ret;
     };
-    ResAgent.prototype.getResDependsInfo = function (path) {
-        return this._mapResDepends[cc.loader._getReferenceKey(path)];
-    };
     ResAgent.prototype.getResUseInfo = function (id) {
         return this._mapResUses[id];
     };
@@ -108,7 +105,7 @@ var ResAgent = /** @class */ (function () {
                 }
             }
             //更新资源依赖
-            var key = cc.loader._getReferenceKey(resArgs.path);
+            var key = cc.loader._getResUuid(resArgs.path, resArgs.type, null, true);
             var resUse = mapResUses[resArgs.keyUse];
             if (!resUse)
                 mapResUses[resArgs.keyUse] = resUse = [];
@@ -146,7 +143,7 @@ var ResAgent = /** @class */ (function () {
             this._addWaitFree(resArgs);
             return;
         }
-        var key = resArgs.path ? cc.loader._getReferenceKey(resArgs.path) : null;
+        var key = resArgs.path ? cc.loader._getResUuid(resArgs.path, resArgs.type, null, true) : null;
         var mapResDepends = this._mapResDepends;
         var mapResUses = this._mapResUses;
         var resUse = mapResUses[resArgs.keyUse];
@@ -183,8 +180,9 @@ var ResAgent = /** @class */ (function () {
         if (!item) {
             var uuid = ccloader._getResUuid(urlPath, type, null, true);
             if (uuid) {
-                var ref = ccloader._getReferenceKey(uuid);
-                item = ccloader._cache[ref];
+                // var ref = ccloader._getReferenceKey(uuid);
+                // item = ccloader._cache[ref];
+                item = ccloader._cache[uuid];
             }
             else {
                 return null;

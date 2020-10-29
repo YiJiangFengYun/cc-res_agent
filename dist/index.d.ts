@@ -16,10 +16,6 @@ export declare class ResAgent {
      * 释放资源处理参数
      */
     private _makeArgsFreeRes;
-    getResDependsInfo(path: string): {
-        numDepended: number;
-        depends: string[];
-    };
     getResUseInfo(id: string): string[];
     /**
      * 使用资源
