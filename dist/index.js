@@ -96,6 +96,8 @@ var ResAgent = /** @class */ (function () {
                 if (item && item.dependKeys && Array.isArray(item.dependKeys)) {
                     for (var _i = 0, _a = item.dependKeys; _i < _a.length; _i++) {
                         var depKey = _a[_i];
+                        if (depKey === key)
+                            continue;
                         var depItem = cc.loader._cache[depKey];
                         updateDependRelations(depKey, depItem);
                         var depInfoDepends = mapResDepends[depKey];
