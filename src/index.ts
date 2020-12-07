@@ -208,7 +208,7 @@ export class ResAgent {
         const mapResUses = this._mapResUses;
         const resUse = mapResUses[resArgs.keyUse];
         if (key) {
-            const index = resUse.indexOf(key);
+            const index = resUse ? resUse.indexOf(key) : -1;
             if (index > -1) {
                 resUse.splice(index, 1);
                 freeOneUse(key, resArgs.type);
