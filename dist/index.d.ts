@@ -1,7 +1,6 @@
 export declare type ProcessCallback = (completedCount: number, totalCount: number, item: any) => void;
 export declare type CompletedCallback = (error: Error, resource?: any) => void;
 export declare class ResAgent {
-    private _mapResDepends;
     private _mapResUses;
     private _loadingCount;
     private _waitFrees;
@@ -16,7 +15,7 @@ export declare class ResAgent {
      * 释放资源处理参数
      */
     private _makeArgsFreeRes;
-    getResUseInfo(id: string): string[];
+    getResUseInfo(id: string): [string, typeof cc.Asset][];
     /**
      * 使用资源
      * @param keyUse        标识使用的key
@@ -40,8 +39,6 @@ export declare class ResAgent {
     freeRes(keyUse: string): any;
     freeRes(keyUse: string, path: string): any;
     freeRes(keyUse: string, path: string, type: typeof cc.Asset): any;
-    private _getItemFromLoaderCache;
-    private _getKey;
     private _doWaitFrees;
     private _addWaitFree;
     private _removeWaitFree;
