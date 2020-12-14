@@ -26,19 +26,15 @@ if (!isChildClassOf) {
 }
 
 export class ResAgent {
-    //资源依赖和被依赖信息
-    private _mapResDepends: { [key: string]: { numDepended: number, depends: string[] } } = {};
-
     //外部使用信息
-    // 外部通过唯一的id使用某些资源，记录到依赖数组中，同时被使用的资源的被依赖次数相应的增加。
-    private _mapResUses: { [ key: string ]: string[] } = {};
+    // 外部通过唯一的id使用某些资源
+    private _mapResUses: { [ key: string ]: [ string, typeof cc.Asset ][] } = {};
 
     private _loadingCount = 0;
 
-    private _waitFrees: { [keyUse: string]: { [path: string ]: ArgsFreeRes } } = {};
+    private _waitFrees: { [keyUse: string]: { [path: string ]: typeof cc.Asset[] } } = {};
 
     public constructor() {
-
     }
 
     public del() {
@@ -58,7 +54,7 @@ export class ResAgent {
         }
         let ret: ArgsUseRes = { keyUse: arguments[0], path: arguments[1] };
         for (let i = 2; i < arguments.length; ++i) {
-            if (i == 2 && isChildClassOf(arguments[i], cc.RawAsset)) {
+            if (i == 2 && isChildClassOf(arguments[i], cc.Asset)) {
                 // 判断是不是第一个参数type
                 ret.type = arguments[i];
             } else if (typeof arguments[i] == "function") {
@@ -108,9 +104,8 @@ export class ResAgent {
     public useRes() {
         ++this._loadingCount;
         const resArgs: ArgsUseRes = this._makeArgsUseRes.apply(this, arguments);
-        const mapResDepends = this._mapResDepends;
         const mapResUses = this._mapResUses;
-        const finishCallback = (error: Error, resource: any) => {
+        const finishCallback = (error: Error, asset: cc.Asset) => {
             --this._loadingCount;
             if (error) {
                 if (resArgs.onCompleted) resArgs.onCompleted(error);
@@ -119,56 +114,28 @@ export class ResAgent {
                 }
                 return;
             }
-            // 反向关联引用（为所有引用到的资源打上本资源引用到的标记）
-            function updateDependRelations(key: string, item: any) {
-                const dependsInfo = mapResDepends[key];
-                //判断资源是否已经存在，并被加入依赖网。
-                // 如果资源之前不存在过，或者已经被释放（numDepended === 0)
-                if (dependsInfo && dependsInfo.numDepended) return;
-
-                let resDepends: { numDepended: number, depends: string[] };
-                if ( ! dependsInfo) {
-                    resDepends = mapResDepends[key] = { depends: [], numDepended: 0 };
-                } else {
-                    resDepends = mapResDepends[key];
-                }
-
-                if (item && item.dependKeys && Array.isArray(item.dependKeys)) {
-                    for (let depKey of item.dependKeys) {
-                        if (depKey === key) continue;
-                        const depItem = (cc.loader as any)._cache[depKey];
-                        updateDependRelations(depKey, depItem);
-
-                        const depInfoDepends = mapResDepends[depKey];
-                        //相互记录依赖
-                        resDepends.depends.push(depKey);
-                        ++depInfoDepends.numDepended;
-                    }
-                }
-            }
-
-            //更新资源依赖
-            const key = this._getKey(resArgs.path, resArgs.type);
 
             let resUse = mapResUses[resArgs.keyUse];
-            if (! resUse) mapResUses[resArgs.keyUse] = resUse = [];
+            if (! resUse) {
+                mapResUses[resArgs.keyUse] = resUse = [];
+            }
 
-            //判断之前使用被相同的使用ID使用过
-            if (resUse.indexOf(key) < 0) {
-                const item = this._getItemFromLoaderCache(resArgs.path, resArgs.type);
-                
-                updateDependRelations(key, item);
-    
-                //更新使用依赖
-                const resDepends = mapResDepends[key];
-                
-                resUse.push(key);
-                ++resDepends.numDepended;
+            const pair: [ string, typeof cc.Asset ] = [ resArgs.path, resArgs.type ];
+
+            const resEvery = resUse.every((item) => {
+                if (item[0] === pair[0] && item[1] === pair[1]) return false;
+            });
+
+            if (! resEvery) {
+
+                asset.addRef();
+
+                resUse.push(pair);
             }
 
             // 执行完成回调
             if (resArgs.onCompleted) {
-                resArgs.onCompleted(null, resource);
+                resArgs.onCompleted(null, asset);
             }
 
             if (this._loadingCount <= 0) {
@@ -180,11 +147,11 @@ export class ResAgent {
         this._removeWaitFree(resArgs);
 
         // 预判是否资源已加载
-        let res = cc.loader.getRes(resArgs.path, resArgs.type);
+        let res = cc.resources.get(resArgs.path, resArgs.type);
         if (res) {
             finishCallback(null, res);
         } else {
-            cc.loader.loadRes(resArgs.path, resArgs.type, resArgs.onProgess, finishCallback);
+            cc.resources.load(resArgs.path, resArgs.type, resArgs.onProgess, finishCallback);
         }
     }
 
@@ -203,83 +170,55 @@ export class ResAgent {
             this._addWaitFree(resArgs);
             return;
         }
-        const key = resArgs.path ? this._getKey(resArgs.path, resArgs.type) : null;
-        const mapResDepends = this._mapResDepends;
+
         const mapResUses = this._mapResUses;
         const resUse = mapResUses[resArgs.keyUse];
-        if (key) {
-            const index = resUse ? resUse.indexOf(key) : -1;
-            if (index > -1) {
-                resUse.splice(index, 1);
-                freeOneUse(key, resArgs.type);
+        if (resArgs.path) {
+            const pair: [ string, typeof cc.Asset ] = [ resArgs.path, resArgs.type ];
+            const filtereds = resUse.filter((item) => {
+                if (item[0] === pair[0] && item[1] === pair[1]) return item;
+            });
+
+            if (filtereds.length > 0) {
+                //Only can be 1
+                filtereds.forEach((item) => {
+                    resUse.splice(resUse.indexOf(item), 1);
+                    const asset = cc.resources.get(item[0], item[1]);
+                    asset.decRef();
+                });
             }
         } else {
             mapResUses[resArgs.keyUse] = [];
-            resUse && resUse.forEach((key) => {
-                freeOneUse(key);
+            resUse && resUse.forEach((item) => {
+                const asset = cc.resources.get(item[0], item[1]);
+                asset.decRef();
             });
         }
-        function freeOneUse(key: string, type?: typeof cc.Asset) {
-            const resDepends = mapResDepends[key];
-            --resDepends.numDepended;
-            if (resDepends.numDepended <= 0) {
-                // 释放该资源
-                const depends = resDepends.depends;
-                resDepends.depends = [];
-
-                cc.loader.release(key);
-
-                depends.forEach((key) => {
-                    freeOneUse(key);
-                });
-            }
-        }
-    }
-
-    private _getItemFromLoaderCache(urlPath: string, type?: typeof cc.Asset) {
-        let ccloader: any = cc.loader;
-        var item = ccloader._cache[urlPath];
-        if (!item) {
-            const key = this._getKey(urlPath, type);
-            if (key) {
-                item = ccloader._cache[key];
-            }
-            else {
-                return null;
-            }
-        }
-        if (item && item.alias) {
-            item = item.alias;
-        }
-
-        return item;
-    }
-
-    private _getKey(urlPath: string, type?: typeof cc.Asset) {
-        let ccloader: any = cc.loader;
-        var uuid = ccloader._getResUuid(urlPath, type, null, true);
-        if (uuid) {
-            var ref = ccloader._getReferenceKey(uuid);
-        }
-        return ref;
     }
 
     private _doWaitFrees() {
         const waitFrees = this._waitFrees;
-        for (let key in waitFrees) {
-            const map = waitFrees[key];
-            for (let key in map) {
-                this.freeRes(map[key].keyUse, map[key].path, map[key].type);
+        for (let keyUse in waitFrees) {
+            const map = waitFrees[keyUse];
+            for (let path in map) {
+                const types = map[path];
+                types.forEach((type) => {
+                    this.freeRes(keyUse, path, type === null ? undefined : type);
+                })
+                
             }
         }
         this._waitFrees = {};
     }
 
     private _addWaitFree(args: ArgsFreeRes) {
-        if (! this._waitFrees[args.keyUse]) {
-            this._waitFrees[args.keyUse] = {};
+        var mapUses = this._waitFrees[args.keyUse];
+        if (! mapUses) this._waitFrees[args.keyUse] = mapUses = {};
+        var types = mapUses[args.path];
+        if (! types) mapUses[args.path] = types = [];
+        if (types.indexOf(args.type || null) < 0) {
+            types.push(args.type || null);
         }
-        this._waitFrees[args.keyUse][args.path] = args;
     }
 
     private _removeWaitFree(args: ArgsUseRes) {
@@ -287,7 +226,14 @@ export class ResAgent {
         if (waitFrees[args.keyUse]) {
             const waitFree = waitFrees[args.keyUse];
             if (args.path) {
-                if (waitFree[args.path]) delete waitFree[args.path];
+                const types = waitFree[args.path];
+                if (types) {
+                    const index = types.indexOf(args.type || null);
+                    if (index > -1) {
+                        types.splice(index, 1);
+                    }
+                }
+                if (types && ! types.length) delete waitFree[args.path];
                 if ( ! Object.keys(waitFree).length) delete waitFrees[args.keyUse];
             } else {
                 delete waitFrees[args.keyUse];
