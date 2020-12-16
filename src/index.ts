@@ -122,11 +122,12 @@ export class ResAgent {
 
             const pair: [ string, typeof cc.Asset ] = [ resArgs.path, resArgs.type ];
 
-            const resEvery = resUse.every((item) => {
+            const notExists = resUse.every((item) => {
                 if (item[0] === pair[0] && item[1] === pair[1]) return false;
+                return true;
             });
 
-            if (! resEvery) {
+            if (notExists) {
 
                 asset.addRef();
 
