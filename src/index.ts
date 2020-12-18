@@ -176,12 +176,12 @@ export class ResAgent {
         const resUse = mapResUses[resArgs.keyUse];
         if (resArgs.path) {
             const pair: [ string, typeof cc.Asset ] = [ resArgs.path, resArgs.type ];
-            const filtereds = resUse.filter((item) => {
+            const filtereds = resUse ? resUse.filter((item) => {
                 if (item[0] === pair[0] && item[1] === pair[1]) return item;
-            });
+            }) : [];
 
             if (filtereds.length > 0) {
-                //Only can be 1
+                //Can only be 1
                 filtereds.forEach((item) => {
                     resUse.splice(resUse.indexOf(item), 1);
                     const asset = cc.resources.get(item[0], item[1]);
