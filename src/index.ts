@@ -26,7 +26,7 @@ if (!isChildClassOf) {
 }
 
 //默认过期时间，单位秒
-const DELAY_FREE_DEFAULT = 60 * 1000;
+const DELAY_FREE_DEFAULT = 60;
 
 function findIndex<Item>(arr: Item[], predicate: (item: Item) => boolean) {
     const len = arr.length;
