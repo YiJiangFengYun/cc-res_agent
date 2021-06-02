@@ -4,17 +4,16 @@ export declare class ResAgent {
     private _mapResUses;
     private _loadingCount;
     private _waitFrees;
-    constructor();
+    /**
+     * 标记是否已经被销毁了
+     */
+    private _isDestroyed;
+    private _time;
+    private _intervalIndex;
+    private _delayFree;
+    constructor(delayFree?: number);
     del(): void;
-    init(): void;
-    /**
-     * 使用资源处理参数
-     */
-    private _makeArgsUseRes;
-    /**
-     * 释放资源处理参数
-     */
-    private _makeArgsFreeRes;
+    init(delayFree?: number): void;
     getResUseInfo(id: string): [string, typeof cc.Asset][];
     /**
      * 使用资源
@@ -39,8 +38,19 @@ export declare class ResAgent {
     freeRes(keyUse: string): any;
     freeRes(keyUse: string, path: string): any;
     freeRes(keyUse: string, path: string, type: typeof cc.Asset): any;
-    private _doWaitFrees;
+    private _checkAndDoWaitFrees;
+    private _doFreeRes;
     private _addWaitFree;
     private _removeWaitFree;
+    private _update;
+    private _clear;
+    /**
+     * 使用资源处理参数
+     */
+    private _makeArgsUseRes;
+    /**
+     * 释放资源处理参数
+     */
+    private _makeArgsFreeRes;
 }
 export declare const resAgent: ResAgent;
