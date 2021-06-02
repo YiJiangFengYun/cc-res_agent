@@ -34,53 +34,31 @@ export class ResAgent {
 
     private _waitFrees: { [keyUse: string]: { [path: string ]: typeof cc.Asset[] } } = {};
 
+    /**
+     * 标记是否已经被销毁了
+     */
+    private _isDestroyed: boolean = false;
+
     public constructor() {
     }
 
     public del() {
-
+        this._isDestroyed = true;
+        this._loadingCount = 0;
+        const mapResUses = this._mapResUses;
+        for (let key in mapResUses) {
+            const resUse = mapResUses[key];
+            resUse && resUse.forEach((item) => {
+                const asset = cc.resources.get(item[0], item[1]);
+                asset.decRef();
+            });
+        }
+        this._mapResUses = {};
+        this._waitFrees = {};
     }
 
     public init() {
 
-    }
-
-    /**
-     * 使用资源处理参数
-     */
-    private _makeArgsUseRes(): ArgsUseRes {
-        if (arguments.length < 2 || typeof arguments[0] !== "string" || typeof arguments[1] !== "string") {
-           throw new Error(`Arguments is invalid !`);
-        }
-        let ret: ArgsUseRes = { keyUse: arguments[0], path: arguments[1] };
-        for (let i = 2; i < arguments.length; ++i) {
-            if (i == 2 && isChildClassOf(arguments[i], cc.Asset)) {
-                // 判断是不是第一个参数type
-                ret.type = arguments[i];
-            } else if (typeof arguments[i] == "function") {
-                // 其他情况为函数
-                if (arguments.length > i + 1 && typeof arguments[i + 1] == "function") {
-                    ret.onProgess = arguments[i];
-                } else {
-                    ret.onCompleted = arguments[i];
-                }
-            }
-        }
-        return ret;
-    }
-
-    /**
-     * 释放资源处理参数
-     */
-    private _makeArgsFreeRes(): ArgsFreeRes {
-        if (arguments.length < 1 || typeof arguments[0] != "string") {
-            throw new Error(`Arguments is invalid !`);
-        }
-        let ret: ArgsFreeRes = { keyUse: arguments[0], path: arguments[1] };
-        for (let i = 2; i < arguments.length; ++i) {
-            ret.type = arguments[i];
-        }
-        return ret;
     }
 
     public getResUseInfo(id: string) {
@@ -106,6 +84,9 @@ export class ResAgent {
         const resArgs: ArgsUseRes = this._makeArgsUseRes.apply(this, arguments);
         const mapResUses = this._mapResUses;
         const finishCallback = (error: Error, asset: cc.Asset) => {
+            if (this._isDestroyed) {
+                return;
+            }
             --this._loadingCount;
             if (error) {
                 if (resArgs.onCompleted) resArgs.onCompleted(error);
@@ -205,8 +186,7 @@ export class ResAgent {
                 const types = map[path];
                 types.forEach((type) => {
                     this.freeRes(keyUse, path, type === null ? undefined : type);
-                })
-                
+                });
             }
         }
         this._waitFrees = {};
@@ -240,6 +220,44 @@ export class ResAgent {
                 delete waitFrees[args.keyUse];
             }
         }
+    }
+
+    /**
+     * 使用资源处理参数
+     */
+     private _makeArgsUseRes(): ArgsUseRes {
+        if (arguments.length < 2 || typeof arguments[0] !== "string" || typeof arguments[1] !== "string") {
+           throw new Error(`Arguments is invalid !`);
+        }
+        let ret: ArgsUseRes = { keyUse: arguments[0], path: arguments[1] };
+        for (let i = 2; i < arguments.length; ++i) {
+            if (i == 2 && isChildClassOf(arguments[i], cc.Asset)) {
+                // 判断是不是第一个参数type
+                ret.type = arguments[i];
+            } else if (typeof arguments[i] == "function") {
+                // 其他情况为函数
+                if (arguments.length > i + 1 && typeof arguments[i + 1] == "function") {
+                    ret.onProgess = arguments[i];
+                } else {
+                    ret.onCompleted = arguments[i];
+                }
+            }
+        }
+        return ret;
+    }
+
+    /**
+     * 释放资源处理参数
+     */
+    private _makeArgsFreeRes(): ArgsFreeRes {
+        if (arguments.length < 1 || typeof arguments[0] != "string") {
+            throw new Error(`Arguments is invalid !`);
+        }
+        let ret: ArgsFreeRes = { keyUse: arguments[0], path: arguments[1] };
+        for (let i = 2; i < arguments.length; ++i) {
+            ret.type = arguments[i];
+        }
+        return ret;
     }
 }
 
