@@ -1,6 +1,6 @@
 {
   "name": "cc-res_agent",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "Cocos creator resource agent for providing a additional feature to manage better resource.",
   "main": "dist/index.js",
   "scripts": {
